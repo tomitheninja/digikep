@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 
+
 def rotate_image(image, angle):
     """Rotate the image by the given angle
 
@@ -13,8 +14,7 @@ def rotate_image(image, angle):
     """
     image_center = tuple(np.array(image.shape[1::-1]) / 2)
     rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-    result = cv2.warpAffine(
-        image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
     return result
 
 
@@ -31,7 +31,8 @@ def get_rotation(angle: float, axis=4):
     domain = np.pi / 2 * (axis / 4)
 
     theta = angle % domain
-    return -theta if theta < domain/2 else domain - theta
+    return -theta if theta < domain / 2 else domain - theta
+
 
 def get_rotation_between_points(point1, point2):
     """Rotation between two points in degrees
@@ -45,7 +46,8 @@ def get_rotation_between_points(point1, point2):
     """
     b = point2[0] - point1[0]
     a = point2[1] - point1[1]
-    return get_rotation(-np.arctan(a/b)) * 180 / np.pi if b != 0 else 0
+    return get_rotation(-np.arctan(a / b)) * 180 / np.pi if b != 0 else 0
+
 
 def process_lines(lines):
     """Normalizes lines and returns the rotations and weights
@@ -59,9 +61,9 @@ def process_lines(lines):
     dxs = lines[:, 2] - lines[:, 0]
     dys = lines[:, 3] - lines[:, 1]
     thetas = np.arctan2(dys, dxs)
-    lens_sqrt = dxs**2 + dys**2
+    lens_sqrt = dxs ** 2 + dys ** 2
     max_len = np.max(lens_sqrt)
-    weights = (lens_sqrt/max_len)**3
+    weights = (lens_sqrt / max_len) ** 3
 
     rotations = np.vectorize(get_rotation)(thetas)
 
@@ -72,7 +74,7 @@ def process_lines(lines):
     return lines[not_noise, :], rotations[not_noise], weights[not_noise]
 
 
-def main(original_image, blur_image = True):
+def main(original_image, blur_image=True):
     img = original_image.copy()
 
     if blur_image:
@@ -87,13 +89,12 @@ def main(original_image, blur_image = True):
 
     edges = cv2.Canny(gray, 50, 150, apertureSize=3)
 
-    lines = cv2.HoughLinesP(edges, 1, np.pi/180, 100,
-                            minLineLength=15, maxLineGap=15)
+    lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength=15, maxLineGap=15)
     if lines is None:
         if not blur_image:
             return 0, original_image
         else:
-            return main(original_image, False) 
+            return main(original_image, False)
 
     lines = np.resize(lines, (lines.shape[0], 4))
     lines, rotations, weights = process_lines(lines)
@@ -118,6 +119,8 @@ cv2.imshow('rotated', rotate_image(original_image, angle))
 cv2.imshow('debug', rotate_image(debug_img, angle))
 
 point1 = None
+
+
 def on_mouse(event, x, y, flags, param):
     """Rotate the image by the mouse position
 
@@ -143,8 +146,9 @@ def on_mouse(event, x, y, flags, param):
     if point1 is not None:
         cv2.line(result, point1, (x, y), (0, 0, 255), 2)
 
-
     cv2.imshow('original', result)
+
+
 cv2.setMouseCallback('original', on_mouse)
 
 while True:
